@@ -1,0 +1,11 @@
+[package]
+name = "recbf"
+version = "0.1.0"
+authors = ["mthh <matthieu.viry@cnrs.fr>"]
+repository = "https://github.com/mthh/recbf"
+
+[dependencies]
+libc = "*"
+
+[dev-dependencies]
+image = "*"
