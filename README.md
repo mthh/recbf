@@ -6,7 +6,7 @@ Example usage with `rust-image` library for reading/writing image files :
 ```rust
 let img = image::open(&Path::new("in.jpg")).unwrap();
 let mut content = img.raw_pixels();
-recursive_bf(&mut content, 0.03, 0.1, width, height, channel);
+recursive_bf(&mut content, sigma_spatial, sigma_range, width, height, channel);
 image::save_buffer(Path::new("out.jpg"), &content, width, height, img.color());
 ```
 
