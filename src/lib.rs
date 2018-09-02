@@ -1,7 +1,6 @@
-extern crate libc;
-use libc::{memcpy, c_void, size_t};
 use std::mem::size_of;
-
+use std::ptr::copy_nonoverlapping;
+use std::os::raw::c_void;
 
 pub fn recursive_bf(img: &mut [u8],
                     sigma_spatial: f32,
@@ -218,16 +217,18 @@ unsafe fn _recursive_bf_unsafe(img: *mut u8,
     let mut xcy: *mut f32;
     let mut tcy: *mut u8;
     let mut tpy: *mut u8;
-    memcpy(img_out_f as (*mut c_void),
+    copy_nonoverlapping(
            img_temp as (*const c_void),
-           size_of::<f32>().wrapping_mul(width_channel as usize) as size_t);
+           img_out_f as (*mut c_void),
+           size_of::<f32>().wrapping_mul(width_channel as usize));
     let in_factor: *mut f32 = map_factor_a;
     let mut ycf: *mut f32;
     let mut ypf: *mut f32;
     let mut xcf: *mut f32;
-    memcpy(map_factor_b as (*mut c_void),
+    copy_nonoverlapping(
            in_factor as (*const c_void),
-           size_of::<f32>().wrapping_mul(width as usize) as size_t);
+           map_factor_b as (*mut c_void),
+           size_of::<f32>().wrapping_mul(width as usize));
     for y in 1..height {
         tpy = &mut *img.offset(((y - 1u32) * width_channel) as (isize)) as (*mut u8);
         tcy = &mut *img.offset((y * width_channel) as (isize)) as (*mut u8);
@@ -265,9 +266,10 @@ unsafe fn _recursive_bf_unsafe(img: *mut u8,
     let h1: u32 = height - 1u32;
     ycf = line_factor_a;
     ypf = line_factor_b;
-    memcpy(ypf as (*mut c_void),
+    copy_nonoverlapping(
            &mut *in_factor.offset((h1 * width) as (isize)) as (*mut f32) as (*const c_void),
-           size_of::<f32>().wrapping_mul(width as usize) as size_t);
+           ypf as (*mut c_void),
+           size_of::<f32>().wrapping_mul(width as usize));
     for x in 0..width {
         *map_factor_b.offset((h1 * width + x) as (isize)) =
             0.5f32 *
@@ -275,9 +277,10 @@ unsafe fn _recursive_bf_unsafe(img: *mut u8,
     }
     ycy = slice_factor_a;
     ypy = slice_factor_b;
-    memcpy(ypy as (*mut c_void),
+    copy_nonoverlapping(
            &mut *img_temp.offset((h1 * width_channel) as (isize)) as (*mut f32) as (*const c_void),
-           size_of::<f32>().wrapping_mul(width_channel as usize) as size_t);
+           ypy as (*mut c_void),
+           size_of::<f32>().wrapping_mul(width_channel as usize));
     let mut k: i32 = 0i32;
     for x in 0..width {
         for c in 0..channel {
@@ -330,12 +333,14 @@ unsafe fn _recursive_bf_unsafe(img: *mut u8,
             }
             factor_ = factor_.offset(1isize);
         }
-        memcpy(ypy as (*mut c_void),
+        copy_nonoverlapping(
                ycy as (*const c_void),
-               size_of::<f32>().wrapping_mul(width_channel as usize) as size_t);
-        memcpy(ypf as (*mut c_void),
+               ypy as (*mut c_void),
+               size_of::<f32>().wrapping_mul(width_channel as usize));
+        copy_nonoverlapping(
                ycf as (*const c_void),
-               size_of::<f32>().wrapping_mul(width as usize) as size_t);
+               ypf as (*mut c_void),
+               size_of::<f32>().wrapping_mul(width as usize));
     }
     for i in 0..width_height_channel as isize {
         *img.offset(i) = *img_out_f.offset(i) as (u8);
